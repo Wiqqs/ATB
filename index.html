@@ -15,7 +15,11 @@
         
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background-size: cover; background-position: center; z-index: 10; }
         .active-screen { display: flex !important; }
+        
+        /* EXAKT AN DEINE DATEIEN ANGEPASST */
         #login-screen { background-image: url('login-bg.jpg'); background-color: #1a1008; }
+        #char-screen { background-image: url('char-bg.png'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
+        
         .login-box { background: rgba(12, 10, 8, 0.9); border: 2px solid #bd9626; box-shadow: 0 0 30px rgba(0, 0, 0, 0.9); padding: 35px; border-radius: 4px; width: 90%; max-width: 380px; text-align: center; }
         .login-title { color: #ffd700; font-size: 1.9rem; margin-bottom: 25px; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
         .login-input { width: 100%; padding: 11px; margin-bottom: 18px; background: #000; border: 1px solid #4a3c24; color: #fff; font-size: 1rem; text-align: center; }
@@ -23,7 +27,6 @@
         .wow-btn { background: linear-gradient(#5a1a1a, #2b0505); border: 2px solid #bd9626; box-shadow: inset 0 0 5px #000, 0 3px 6px rgba(0,0,0,0.8); color: #ffd700; font-size: 1.05rem; font-weight: bold; padding: 10px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .wow-btn:active { transform: scale(0.97); }
         
-        #char-screen { background-image: url('char-bg.jpg'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
         .side-panel { width: 260px; height: 92%; background: rgba(12, 9, 7, 0.88); border: 2px solid #bd9626; padding: 20px; display: flex; flex-direction: column; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.7); }
         .center-panel { flex-grow: 1; height: 92%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
         #char-3d-container { position: absolute; top: 0; left: 0; width: 100%; height: 85%; z-index: 15; cursor: grab; }
@@ -45,7 +48,7 @@
 </head>
 <body>
 
-    <!-- 0. SYSTEM-FREISCHALTUNG (AUDIO & INTERAKTION) -->
+    <!-- 0. SYSTEM-FREISCHALTUNG -->
     <div id="audio-unlocker">
         <h1 style="color: #ffd700; margin-bottom: 20px; font-size: 2.2rem; text-shadow: 0 0 10px #000;">Craft of Worldwar</h1>
         <button class="wow-btn" style="padding: 15px 40px; font-size: 1.2rem;" onclick="unlockGameEngine()">Spiel Starten</button>
@@ -113,9 +116,8 @@
             document.getElementById('login-screen').classList.add('active-screen');
             activeScreen = "login";
             
-            // Startet die Musik sauber nach dem Klick
             const music = document.getElementById('login-theme');
-            music.play().catch(e => console.log("Audio-Fehler: Datei fehlt oder Name falsch. Checke fx_login_darkportal_loop.ogg"));
+            music.play().catch(e => console.log("Audio blockiert oder Datei fehlt"));
         }
 
         window.addEventListener('keydown', function(e) {
@@ -188,8 +190,6 @@
                     charMixer = new THREE.AnimationMixer(charModel);
                     charMixer.clipAction(gltf.animations).play();
                 }
-            }, undefined, function(error) {
-                console.error("Kritischer Ladefehler: 'orcmale.glb' konnte auf deinem GitHub-Server nicht gefunden werden.");
             });
 
             container.addEventListener('mousedown', () => isMouseDown = true);
@@ -235,6 +235,7 @@
             gameScene.add(new THREE.AmbientLight(0x666666));
 
             const textureLoader = new THREE.TextureLoader();
+            // KORRIGIERT auf deine durotardirt.png Datei
             textureLoader.load('durotardirt.png', function(texture) {
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
@@ -244,8 +245,6 @@
                 floorMesh = new THREE.Mesh(floorGeo, floorMat);
                 floorMesh.rotation.x = -Math.PI / 2;
                 gameScene.add(floorMesh);
-            }, undefined, function(err) {
-                console.error("Texturfehler: 'durotardirt.png' fehlt auf GitHub.");
             });
 
             const loader = new THREE.GLTFLoader();
@@ -260,8 +259,6 @@
                 boarModel = gltf.scene;
                 resetBoarPosition();
                 gameScene.add(boarModel);
-            }, undefined, function(err) {
-                console.error("Model-Fehler: 'boar.glb' fehlt auf GitHub.");
             });
 
             gameLoopRunning = true;
