@@ -6,7 +6,7 @@
     <title>Craft of Worldwar</title>
     <!-- Drei.js Hauptbibliothek für 3D im Browser -->
     <script src="https://cloudflare.com"></script>
-    <!-- GLTFLoader zum Laden von echten 3D-Kreaturen aus dem Web -->
+    <!-- GLTFLoader zum Laden deiner eigenen .glb-Dateien -->
     <script src="https://jsdelivr.net"></script>
     <style>
         * {
@@ -88,7 +88,7 @@
         }
         .wow-btn:active { transform: scale(0.97); }
 
-        /* 2. CHARAKTER MENÜ */
+        /* 2. CHARAKTER MENÜ (Fehler behoben!) */
         #char-screen {
             background-image: url('char-bg.jpg');
             background-color: #15100e;
@@ -253,10 +253,6 @@
         let isMouseDown = false, previousMousePosition = { x: 0 };
         let gameLoopRunning = false, combatTimer = null, isMovingToEnemy = false;
 
-        // CDN Links zu verifizierten 3D WoW-Modellen aus dem Repository
-        const ORC_URL = 'https://githubusercontent.com';
-        const BOAR_URL = 'https://githubusercontent.com';
-
         window.addEventListener('keydown', function(e) {
             if (e.key === "Escape" || e.keyCode === 27) {
                 if (activeScreen === "char" || activeScreen === "game") toggleEscMenu();
@@ -302,7 +298,7 @@
 
             charScene = new THREE.Scene();
             charCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            charCamera.position.set(0, 1.0, 2.5);
+            charCamera.position.set(0, 1.1, 2.6);
 
             charRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             charRenderer.setSize(container.clientWidth, container.clientHeight);
@@ -313,11 +309,11 @@
             charScene.add(light);
             charScene.add(new THREE.AmbientLight(0x777777));
 
+            // Lädt deine LOKALE orcmale.glb Datei von deinem Server
             const loader = new THREE.GLTFLoader();
-            loader.load(ORC_URL, function(gltf) {
+            loader.load('orcmale.glb', function(gltf) {
                 charModel = gltf.scene;
-                charModel.position.set(0, -0.2, 0);
-                charModel.scale.set(0.7, 0.7, 0.7);
+                charModel.position.set(0, 0, 0);
                 charScene.add(charModel);
 
                 if(gltf.animations && gltf.animations.length > 0) {
@@ -329,10 +325,21 @@
             container.addEventListener('mousedown', () => isMouseDown = true);
             window.addEventListener('mouseup', () => isMouseDown = false);
             container.addEventListener('mousemove', (e) => {
+                // Modifiziert: Rerechnet NUR noch die Links/Rechts-Achse (Y-Achse), blockiert Oben/Unten
                 if (isMouseDown && charModel) {
                     charModel.rotation.y += (e.clientX - previousMousePosition.x) * 0.01;
                 }
                 previousMousePosition = { x: e.clientX };
+            });
+
+            // Touch-Support für Handys (Nur Y-Achsen Rotation)
+            container.addEventListener('touchstart', (e) => { isMouseDown = true; previousMousePosition.x = e.touches[0].clientX; });
+            window.addEventListener('touchend', () => isMouseDown = false);
+            container.addEventListener('touchmove', (e) => {
+                if (isMouseDown && charModel) {
+                    charModel.rotation.y += (e.touches[0].clientX - previousMousePosition.x) * 0.01;
+                }
+                previousMousePosition = { x: e.touches[0].clientX };
             });
 
             const clock = new THREE.Clock();
@@ -353,43 +360,48 @@
             }
 
             gameScene = new THREE.Scene();
-            gameScene.background = new THREE.Color(0xb5512b); // Rötliches Durotar-Licht
-            gameScene.fog = new THREE.FogExp2(0xb5512b, 0.05);
+            gameScene.background = new THREE.Color(0x331a0e); // Dunkles Umgebungslicht passend zur Wüste
+            gameScene.fog = new THREE.FogExp2(0x331a0e, 0.04);
 
             gameCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            gameCamera.position.set(0, 3.0, 5.5);
+            gameCamera.position.set(0, 3.5, 6);
 
             gameRenderer = new THREE.WebGLRenderer({ antialias: true });
             gameRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(gameRenderer.domElement);
 
-            const light = new THREE.DirectionalLight(0xffddaa, 1.5);
+            const light = new THREE.DirectionalLight(0xffffff, 1.4);
             light.position.set(5, 10, 5);
             gameScene.add(light);
-            gameScene.add(new THREE.AmbientLight(0x553322));
+            gameScene.add(new THREE.AmbientLight(0x666666));
 
-            // Durotar Wüstenboden bauen
-            const floorGeo = new THREE.PlaneGeometry(50, 1000);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x8a3d1c, roughness: 0.9 });
-            floorMesh = new THREE.Mesh(floorGeo, floorMat);
-            floorMesh.rotation.x = -Math.PI / 2;
-            gameScene.add(floorMesh);
+            // NEU: Lädt deine 'durotardirt.png' Datei als echte Bodentextur auf ein ebenes 3D Feld
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load('durotardirt.png', function(texture) {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(10, 100); // Kachelung für die lange Laufstrecke
+                
+                const floorGeo = new THREE.PlaneGeometry(40, 1000);
+                const floorMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
+                floorMesh = new THREE.Mesh(floorGeo, floorMat);
+                floorMesh.rotation.x = -Math.PI / 2;
+                gameScene.add(floorMesh);
+            });
 
             const loader = new THREE.GLTFLoader();
 
-            // Spieler laden
-            loader.load(ORC_URL, function(gltf) {
+            // Lädt deine LOKALE orcmale.glb Datei im Spiel
+            loader.load('orcmale.glb', function(gltf) {
                 playerModel = gltf.scene;
-                playerModel.position.set(0, -0.2, 0);
-                playerModel.scale.set(0.7, 0.7, 0.7);
+                playerModel.position.set(0, 0, 0);
                 gameScene.add(playerModel);
                 gameCamera.lookAt(playerModel.position);
             });
 
-            // Eber laden
-            loader.load(BOAR_URL, function(gltf) {
+            // Lädt deine LOKALE boar.glb Datei im Spiel
+            loader.load('boar.glb', function(gltf) {
                 boarModel = gltf.scene;
-                boarModel.scale.set(0.5, 0.5, 0.5);
                 resetBoarPosition();
                 gameScene.add(boarModel);
             });
@@ -401,8 +413,9 @@
                 requestAnimationFrame(gameRenderLoop);
                 if (gameLoopRunning) {
                     if (isMovingToEnemy && boarModel) {
-                        if (boarModel.position.z < 1.2) {
-                            boarModel.position.z += 0.12; // Gegner läuft auf den Orc zu
+                        if (boarModel.position.z < 1.4) {
+                            boarModel.position.z += 0.16; // Eber bewegt sich im 3D Raum auf den Orc zu
+                            if(floorMesh) floorMesh.position.z += 0.08; // Boden gleitet mit weg
                         } else {
                             isMovingToEnemy = false;
                         }
@@ -415,7 +428,7 @@
 
         function resetBoarPosition() {
             if(boarModel) {
-                boarModel.position.set(0, -0.2, -22);
+                boarModel.position.set(0, 0, -25); // Setzt den Eber weit nach hinten
                 boarModel.visible = true;
                 isMovingToEnemy = true;
             }
@@ -432,7 +445,7 @@
 
                 clearInterval(combatTimer);
                 setTimeout(() => {
-                    if(boarModel) boarModel.visible = false;
+                    if(boarModel) boarModel.visible = false; // Eber wird unsichtbar nach Tod
                     setTimeout(() => {
                         resetBoarPosition();
                         startAutoCombatLoop();
