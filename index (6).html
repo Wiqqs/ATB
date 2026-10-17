@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>World of Warcraft - Browser Engine</title>
+    <!-- Einbindung von Three.js für echte 3D GLTF/GLB-Modellunterstützung -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+            background-position: center;
+            z-index: 10;
+        }
+        .active-screen {
+            display: flex !important;
+        }
+
+        /* 1. LOGIN SCREEN OVERLAY */
+        #login-screen {
+            background-image: url('login-bg.jpg');
+            background-color: #0c0704;
+        }
+        .login-frame {
+            background: rgba(12, 9, 7, 0.85);
+            border: 2px solid #bd9626;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.9);
+            padding: 35px;
+            border-radius: 3px;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+        }
+        .wow-title {
+            color: #fca311;
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px #000;
+        }
+        .input-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #000;
+            border: 1px solid #5c4314;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .input-box:focus { border-color: #ffd700; outline: none; }
+
+        /* BUTTONS IM ORIGINAL WOW-STYLE */
+        .wow-btn {
+            background: linear-gradient(#731a1a, #360505);
+            border: 2px solid #bd9626;
+            box-shadow: inset 0 0 4px #000, 0 3px 5px rgba(0,0,0,0.7);
+            color: #ffd700;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 10px 25px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .wow-btn:active { transform: scale(0.98); }
+
+        /* 2. CHARACTER SELECTION SCREEN LAYOUT (3 SPALTEN) */
+        #char-screen {
+            background-image: url('char-bg.jpg');
+            background-color: #100b08;
+            flex-direction: row !important;
+            justify-content: space-between;
+            align-items: stretch;
+            padding: 20px;
+        }
+        .ui-column {
+            width: 280px;
+            background: rgba(15, 11, 8, 0.85);
+            border: 2px solid #bd9626;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+        }
+        .center-stage {
+            flex-grow: 1;
+            position: relative;
+            height: 100%;
+        }
+        #threejs-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 15;
+        }
+        .col-title {
+            color: #bd9626;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #5c4314;
+            padding-bottom: 6px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .char-card {
+            background: linear-gradient(rgba(139, 0, 0, 0.25), rgba(40, 0, 0, 0.55));
+            border: 1px solid #8b0000;
+            padding: 12px;
+            border-radius: 2px;
+            color: #ff4500;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* 3. GAMEPLAY CANVAS SCREEN */
+        #game-screen {
+            position: absolute;
+            width: 100%; height: 100%;
+            display: none;
+        }
+        #game-3d-container {
+            width: 100%; height: 100%;
+            position: absolute; top:0; left:0; z-index: 5;
+        }
+        .hud-overlay { position: absolute; z-index: 40; pointer-events: auto; }
+        .hud-frame {
+            top: 20px; left: 20px;
+            background: rgba(12, 10, 8, 0.85);
+            border: 2px solid #bd9626;
+            padding: 12px; width: 220px;
+        }
+        .hp-bar-fill { height: 14px; background: linear-gradient(#2e7d32, #1b5e20); border: 1px solid #000; }
+        .quest-tracker {
+            top: 20px; right: 20px;
+            background: rgba(12, 10, 8, 0.85);
+            border: 1px solid #5c4314;
+            padding: 12px; width: 250px;
+        }
+        .bottom-action-bar {
+            bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(12, 10, 8, 0.9);
+            border: 2px solid #bd9626;
+            padding: 8px; display: flex; gap: 8px;
+        }
+        .action-slot {
+            width: 48px; height: 48px; border: 1px solid #5c4314;
+            background: #111; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PHASE 1: LOGINSCHIRM -->
+    <div id="login-screen" class="screen active-screen">
+        <div class="login-frame">
+            <h1 class="wow-title">World of Warcraft</h1>
+            <input type="text" class="input-box" value="Wiqqs">
+            <input type="password" class="input-box" value="••••••••">
+            <button class="wow-btn" style="width: 100%; margin-top: 10px;" onclick="enterCharacterMenu()">Einloggen</button>
+        </div>
+    </div>
+
+    <!-- PHASE 2: CHARAKTERAUSWAHL -->
+    <div id="char-screen" class="screen">
+        <!-- Linker Bereich: News -->
+        <div class="ui-column">
+            <h3 class="col-title">Neuigkeiten</h3>
+            <p style="font-size: 0.85rem; color: #edd19c; line-height: 1.4;">
+                Modell-Injektion aktiv.<br><br>
+                Deine extrahierte Datei <strong>orcmale.glb</strong> wird im Zentrum geladen.
+            </p>
+        </div>
+
+        <!-- Mittiger Bereich: 3D-Bühne für GLB -->
+        <div class="center-stage">
+            <div id="threejs-container"></div>
+            <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 30;">
+                <button class="wow-btn" style="width: 200px;" onclick="enterWorld()">Welt betreten</button>
+            </div>
+        </div>
+
+        <!-- Rechter Bereich: Charakterliste -->
+        <div class="ui-column">
+            <h3 class="col-title">Charaktere</h3>
+            <div class="char-card">
+                Wiqqs<br>
+                <span style="font-size: 0.8rem; color: #fff; font-weight: normal;">Stufe 1 Orc Krieger</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHASE 3: HAUPTSPIEL -->
+    <div id="game-screen">
+        <div id="game-3d-container"></div>
+        
+        <div class="hud-overlay hud-frame">
+            <div style="font-weight: bold; color: #ffd700;">Wiqqs (Stufe 1)</div>
+            <div class="hp-bar-fill" style="margin-top: 5px;"></div>
+        </div>
+
+        <div class="hud-overlay quest-tracker">
+            <div style="color: #bd9626; font-weight: bold; margin-bottom: 5px;">Questverfolgung</div>
+            <div style="font-size: 0.85rem; color: #edd19c;">Die Plage Durotars<br>- Eber besiegt: 0 / 3</div>
+        </div>
+
+        <div class="hud-overlay bottom-action-bar">
+            <div class="action-slot">⚔️</div>
+            <div class="action-slot">🛡️</div>
+            <div class="action-slot">💥</div>
+            <div class="action-slot">🔥</div>
+        </div>
+    </div>
+
+    <script>
+        let charScene, charCamera, charRenderer, charMixer;
+        let gameScene, gameCamera, gameRenderer;
+        let clock = new THREE.Clock();
+
+        function enterCharacterMenu() {
+            document.getElementById('login-screen').classList.remove('active-screen');
+            document.getElementById('char-screen').classList.add('active-screen');
+            init3DCharacterScreen();
+        }
+
+        function enterWorld() {
+            document.getElementById('char-screen').classList.remove('active-screen');
+            document.getElementById('game-screen').style.display = 'block';
+            init3DGameWorld();
+        }
+
+        // 3D-ENGINE FÜR DIE CHARAKTERAUSWAHL (LÄDT ORCMALE.GLB)
+        function init3DCharacterScreen() {
+            const container = document.getElementById('threejs-container');
+            if (container.children.length > 0) return; // Schutz vor doppelter Initialisierung
+
+            charScene = new THREE.Scene();
+            charCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            charCamera.position.set(0, 1.2, 3.2);
+
+            charRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            charRenderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(charRenderer.domElement);
+
+            // Ausleuchtung der Szene
+            const dirLight = new THREE.DirectionalLight(0xfff5e6, 1.5);
+            dirLight.position.set(2, 4, 3);
+            charScene.add(dirLight);
+            charScene.add(new THREE.AmbientLight(0x554433, 1.0));
+
+            // DER GLTF-LOADER FÜR DEINEN ORC
+            const loader = new THREE.GLTFLoader();
+            loader.load('orcmale.glb', function(gltf) {
+                const model = gltf.scene;
+                model.position.set(0, 0, 0);
+                model.scale.set(1, 1, 1);
+                charScene.add(model);
+
+                // Prüfen und Abspielen der ersten integrierten WoW-Animation
+                if (gltf.animations && gltf.animations.length > 0) {
+                    charMixer = new THREE.AnimationMixer(model);
+                    const action = charMixer.clipAction(gltf.animations[0]);
+                    action.play();
+                }
+            }, undefined, function(error) {
+                console.log("Warte auf orcmale.glb-Upload. Temporärer Platzhalter aktiv.");
+                // Fallback-Zylinder, falls die GLB-Datei noch nicht hochgeladen wurde
+                const fallbackGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.5, 8);
+                const fallbackMat = new THREE.MeshStandardMaterial({ color: 0x225c34, roughness: 0.8 });
+                const mesh = new THREE.Mesh(fallbackGeo, fallbackMat);
+                mesh.position.set(0, 0.75, 0);
+                charScene.add(mesh);
+            });
+
+            function animateCharScreen() {
+                requestAnimationFrame(animateCharScreen);
+                const delta = clock.getDelta();
+                if (charMixer) charMixer.update(delta);
+                charRenderer.render(charScene, charCamera);
+            }
+            animateCharScreen();
+
+            window.addEventListener('resize', () => {
+                if (charCamera && charRenderer) {
+                    charCamera.aspect = container.clientWidth / container.clientHeight;
+                    charCamera.updateProjectionMatrix();
+                    charRenderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            });
+        }
+
+        // 3D-ENGINE FÜR DIE LIVE-SPIELWELT
+        function init3DGameWorld() {
+            const container = document.getElementById('game-3d-container');
+            gameScene = new THREE.Scene();
+            gameScene.background = new THREE.Color(0x612d15); // Durotar-Wüstenrot
+
+            gameCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            gameCamera.position.set(0, 2.5, 4.5);
+
+            gameRenderer = new THREE.WebGLRenderer({ antialias: true });
+            gameRenderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(gameRenderer.domElement);
+
+            const light = new THREE.DirectionalLight(0xffeedd, 1.2);
+            light.position.set(5, 10, 5);
+            gameScene.add(light);
+            gameScene.add(new THREE.AmbientLight(0x331100));
+
+            // Bodenplatte für die Spielwelt
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(50, 500),
+                new THREE.MeshStandardMaterial({ color: 0x54240e, roughness: 0.9 })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            gameScene.add(floor);
+
+            function animateWorld() {
+                requestAnimationFrame(animateWorld);
+                gameRenderer.render(gameScene, gameCamera);
+            }
+            animateWorld();
+        }
+    </script>
+</body>
+</html>
