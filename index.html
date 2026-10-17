@@ -9,22 +9,16 @@
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
         body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Georgia', serif; color: #fff; }
-        
         #audio-unlocker { position: absolute; width: 100%; height: 100%; background: #0c0a08; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background-size: cover; background-position: center; z-index: 10; }
         .active-screen { display: flex !important; }
-        
         #login-screen { background-image: url('login-bg.jpg'); background-color: #1a1008; }
         #char-screen { background-image: url('char-bg.png'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
-        
         .login-box { background: rgba(12, 10, 8, 0.9); border: 2px solid #bd9626; box-shadow: 0 0 30px rgba(0, 0, 0, 0.9); padding: 35px; border-radius: 4px; width: 90%; max-width: 380px; text-align: center; }
         .login-title { color: #ffd700; font-size: 1.9rem; margin-bottom: 25px; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
         .login-input { width: 100%; padding: 11px; margin-bottom: 18px; background: #000; border: 1px solid #4a3c24; color: #fff; font-size: 1rem; text-align: center; }
-        
         .wow-btn { background: linear-gradient(#5a1a1a, #2b0505); border: 2px solid #bd9626; box-shadow: inset 0 0 5px #000, 0 3px 6px rgba(0,0,0,0.8); color: #ffd700; font-size: 1.05rem; font-weight: bold; padding: 10px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .wow-btn:active { transform: scale(0.97); }
-        
         .side-panel { width: 260px; height: 92%; background: rgba(12, 9, 7, 0.88); border: 2px solid #bd9626; padding: 20px; display: flex; flex-direction: column; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.7); }
         .center-panel { flex-grow: 1; height: 92%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
         #char-3d-container { position: absolute; top: 0; left: 0; width: 100%; height: 85%; z-index: 15; cursor: grab; }
@@ -32,7 +26,6 @@
         .panel-title { color: #bd9626; font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #4a3c24; padding-bottom: 5px; text-transform: uppercase; }
         .char-list-item { padding: 12px; background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8)); border: 1px solid #bd9626; color: #fff; font-weight: bold; }
         .char-subtext { font-size: 0.8rem; color: #edd19c; margin-top: 3px; }
-        
         #game-screen { position: absolute; width: 100%; height: 100%; display: none; z-index: 5; }
         #game-3d-container { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 6; }
         .ui-overlay { position: absolute; z-index: 40; }
@@ -46,16 +39,13 @@
 </head>
 <body>
 
-    <!-- 0. SYSTEM-FREISCHALTUNG -->
     <div id="audio-unlocker">
         <h1 style="color: #ffd700; margin-bottom: 20px; font-size: 2.2rem; text-shadow: 0 0 10px #000;">Craft of Worldwar</h1>
         <button class="wow-btn" style="padding: 15px 40px; font-size: 1.2rem;" onclick="unlockGameEngine()">Spiel Starten</button>
     </div>
 
-    <!-- AUDIO PLAYER -->
     <audio id="login-theme" loop src="fx_login_darkportal_loop.ogg"></audio>
 
-    <!-- 1. LOGIN SCREEN -->
     <div id="login-screen" class="screen">
         <div class="login-box">
             <h1 class="login-title">Craft of Worldwar</h1>
@@ -65,7 +55,6 @@
         </div>
     </div>
 
-    <!-- 2. CHARAKTER MENÜ -->
     <div id="char-screen" class="screen">
         <div class="side-panel">
             <h3 class="panel-title">Realm-Status</h3>
@@ -84,7 +73,6 @@
         </div>
     </div>
 
-    <!-- 3. MAIN GAMEPLAY SCREEN -->
     <div id="game-screen">
         <div id="game-3d-container"></div>
         <div id="damage-text"></div>
@@ -95,7 +83,6 @@
         </div>
     </div>
 
-    <!-- ESC SYSTEMMENÜ -->
     <div id="esc-menu" class="esc-menu">
         <div style="color: #bd9626; font-size: 1.3rem; font-weight: bold; text-transform: uppercase;">Systemmenü</div>
         <button class="wow-btn" style="width: 100%;" onclick="processLogout()">Ausloggen</button>
@@ -113,7 +100,6 @@
             document.getElementById('audio-unlocker').style.display = 'none';
             document.getElementById('login-screen').classList.add('active-screen');
             activeScreen = "login";
-            
             const music = document.getElementById('login-theme');
             music.play().catch(e => console.log("Audio blockiert"));
         }
@@ -161,22 +147,20 @@
             initMainGame3D();
         }
 
-        // Hilfsfunktion: Passt JEDES Modell automatisch an das Sichtfeld an (Ausfallschutz)
         function autoFitModelToCamera(model, desiredHeight = 1.5) {
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
             
-            // Setzt den Mittelpunkt auf Null zurück
             model.position.x += (model.position.x - center.x);
-            model.position.y += (model.position.y - box.min.y); // Steht auf dem Boden
+            model.position.y += (model.position.y - box.min.y);
             model.position.z += (model.position.z - center.z);
             
-            // Skaliert das Modell auf eine normale menschliche Größe
             if (size.y > 0) {
                 const scale = desiredHeight / size.y;
                 model.scale.set(scale, scale, scale);
             }
+            return new THREE.Vector3(0, desiredHeight / 2, 0);
         }
 
         function initChar3D() {
@@ -191,21 +175,21 @@
             charRenderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(charRenderer.domElement);
 
-            // MASSIV ERHÖHTES LICHT (Gegen Blackscreens)
-            const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
             dirLight.position.set(3, 6, 4);
             charScene.add(dirLight);
-            charScene.add(new THREE.AmbientLight(0xffffff, 1.5));
+            charScene.add(new THREE.AmbientLight(0xffffff, 2.0));
 
             const loader = new THREE.GLTFLoader();
-            loader.load('orcmale.glb', function(gltf) {
+            loader.load('./orcmale.glb', function(gltf) {
                 charModel = gltf.scene;
-                autoFitModelToCamera(charModel, 1.4); // Automatische Skalierung aktiv!
+                const targetLook = autoFitModelToCamera(charModel, 1.4);
                 charScene.add(charModel);
+                charCamera.lookAt(targetLook);
 
                 if(gltf.animations && gltf.animations.length > 0) {
                     charMixer = new THREE.AnimationMixer(charModel);
-                    charMixer.clipAction(gltf.animations[0]).play();
+                    charMixer.clipAction(gltf.animations).play();
                 }
             });
 
@@ -236,24 +220,23 @@
             }
 
             gameScene = new THREE.Scene();
-            gameScene.background = new THREE.Color(0x331a0e);
-            gameScene.fog = new THREE.FogExp2(0x331a0e, 0.02);
+            gameScene.background = new THREE.Color(0x1a0d07);
+            gameScene.fog = new THREE.FogExp2(0x1a0d07, 0.03);
 
             gameCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            gameCamera.position.set(0, 2.5, 5);
+            gameCamera.position.set(0, 2.2, 4.5);
 
             gameRenderer = new THREE.WebGLRenderer({ antialias: true });
             gameRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(gameRenderer.domElement);
 
-            // FLUTLICHT INGAME
-            const gameLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            const gameLight = new THREE.DirectionalLight(0xffffff, 3.0);
             gameLight.position.set(5, 12, 6);
             gameScene.add(gameLight);
-            gameScene.add(new THREE.AmbientLight(0xffffff, 1.4));
+            gameScene.add(new THREE.AmbientLight(0xffffff, 1.8));
 
             const textureLoader = new THREE.TextureLoader();
-            textureLoader.load('durotardirt.png', function(texture) {
+            textureLoader.load('./durotardirt.png', function(texture) {
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
                 texture.repeat.set(10, 100);
@@ -261,22 +244,20 @@
                 const floorMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
                 floorMesh = new THREE.Mesh(floorGeo, floorMat);
                 floorMesh.rotation.x = -Math.PI / 2;
-                floorMesh.position.y = -0.1;
+                floorMesh.position.y = 0;
                 gameScene.add(floorMesh);
             });
 
             const loader = new THREE.GLTFLoader();
             
-            // Orc Ingame laden & anpassen
-            loader.load('orcmale.glb', function(gltf) {
+            loader.load('./orcmale.glb', function(gltf) {
                 playerModel = gltf.scene;
-                autoFitModelToCamera(playerModel, 1.4);
+                const targetLook = autoFitModelToCamera(playerModel, 1.4);
                 gameScene.add(playerModel);
-                gameCamera.lookAt(new THREE.Vector3(0, 0.6, 0));
+                gameCamera.lookAt(targetLook);
             });
 
-            // Eber Ingame laden & anpassen
-            loader.load('boar.glb', function(gltf) {
+            loader.load('./boar.glb', function(gltf) {
                 boarModel = gltf.scene;
                 autoFitModelToCamera(boarModel, 0.8);
                 resetBoarPosition();
