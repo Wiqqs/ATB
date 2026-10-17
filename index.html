@@ -36,14 +36,12 @@
         .char-list-item { padding: 12px; background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8)); border: 1px solid #bd9626; color: #fff; font-weight: bold; }
         .char-subtext { font-size: 0.8rem; color: #edd19c; margin-top: 3px; }
         
-        /* 2D Dummy-Modelle für das Charaktermenü und Ingame */
+        /* 2D Dummy-Modelle */
         .char-2d-display { width: 140px; height: 220px; background: rgba(255,255,255,0.1); border: 2px dashed #bd9626; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #edd19c; font-weight: bold; text-align: center; text-shadow: 1px 1px 2px #000; box-shadow: 0 0 20px rgba(0,0,0,0.6); }
         
-        /* Ingame Kampfarena im Murloc RPG Stil */
+        /* Ingame Kampfarena */
         .battle-arena { position: absolute; bottom: 15%; left: 0; width: 100%; height: 300px; pointer-events: none; }
-        
         .rpg-character { position: absolute; bottom: 20px; left: 15%; width: 120px; height: 180px; background: linear-gradient(135deg, #2e7d32, #1b5e20); border: 3px solid #bd9626; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; text-shadow: 1px 1px 3px #000; box-shadow: 0 10px 15px rgba(0,0,0,0.5); transition: left 0.4s ease-in-out; }
-        
         .rpg-boar { position: absolute; bottom: 20px; right: 15%; width: 110px; height: 110px; background: linear-gradient(135deg, #795548, #4e342e); border: 3px solid #bd9626; border-radius: 50% 40% 40% 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ffcc80; text-shadow: 1px 1px 3px #000; box-shadow: 0 10px 15px rgba(0,0,0,0.5); display: none; }
         
         /* UI Overlay Ingame */
@@ -68,7 +66,11 @@
         <button class="wow-btn" style="padding: 15px 40px; font-size: 1.2rem;" onclick="unlockGameEngine()">Spiel Starten</button>
     </div>
 
+    <!-- Audio-Elemente -->
     <audio id="login-theme" loop src="fx_login_darkportal_loop.ogg"></audio>
+    <audio id="snd-button" src="iuiinterfacebuttona.ogg"></audio>
+    <audio id="snd-enter-world" src="ienterworlda.ogg"></audio>
+    <audio id="snd-loot" src="iglootcreature.ogg"></audio>
 
     <div id="login-screen" class="screen">
         <div class="login-box">
@@ -124,17 +126,28 @@
         let gameLoopRunning = false;
         let loopTimer = null;
 
+        function playSound(id) {
+            const snd = document.getElementById(id);
+            if (snd) {
+                snd.currentTime = 0;
+                snd.play().catch(e => console.log("Audio-Wiedergabe blockiert"));
+            }
+        }
+
         function unlockGameEngine() {
             document.getElementById('audio-unlocker').style.display = 'none';
             document.getElementById('login-screen').classList.add('active-screen');
             activeScreen = "login";
             const music = document.getElementById('login-theme');
-            music.play().catch(e => console.log("Audio blockiert"));
+            music.play().catch(e => console.log("Hintergrundmusik blockiert"));
         }
 
         window.addEventListener('keydown', function(e) {
             if (e.key === "Escape" || e.keyCode === 27) {
-                if (activeScreen === "char" || activeScreen === "game") toggleEscMenu();
+                if (activeScreen === "char" || activeScreen === "game") {
+                    playSound('snd-button');
+                    toggleEscMenu();
+                }
             }
         });
 
@@ -144,6 +157,7 @@
         }
 
         function processLogout() {
+            playSound('snd-button');
             document.getElementById('esc-menu').style.display = 'none';
             if (activeScreen === "game") {
                 gameLoopRunning = false;
@@ -161,14 +175,17 @@
         }
 
         function showCharacterMenu() {
+            playSound('snd-button');
             document.getElementById('login-screen').classList.remove('active-screen');
             document.getElementById('char-screen').classList.add('active-screen');
             activeScreen = "char";
         }
 
         function startGame() {
+            playSound('snd-enter-world');
             const music = document.getElementById('login-theme');
             music.pause();
+            
             document.getElementById('char-screen').classList.remove('active-screen');
             document.getElementById('game-screen').style.display = 'block';
             activeScreen = "game";
@@ -177,38 +194,38 @@
             runRpgGameplayLoop();
         }
 
-        /* Der vollautomatische Murloc RPG Gameplay-Loop */
         function runRpgGameplayLoop() {
             if (!gameLoopRunning) return;
 
             const hero = document.getElementById('rpg-hero');
             const enemy = document.getElementById('rpg-enemy');
 
-            // 1. Reset: Held geht auf Startposition, Eber spawnt rechts
+            // 1. Reset: Positionen zurücksetzen
             hero.style.left = "15%";
             enemy.style.display = "flex";
 
-            // 2. Nach 1 Sekunde stürmt der Held nach vorne zum Gegner
+            // 2. Nach 1 Sekunde stürmt der Held los
             loopTimer = setTimeout(() => {
                 if (!gameLoopRunning) return;
-                hero.style.left = "60%"; // Stürmen-Animation per CSS Transition
+                hero.style.left = "60%";
 
-                // 3. Nach Ankunft (0.4s): Schlag ausführen und Schaden anzeigen
+                // 3. Kampf-Treffer nach dem Ankommen (0.4s)
                 loopTimer = setTimeout(() => {
                     if (!gameLoopRunning) return;
                     
-                    let dmg = Math.floor(Math.random() * 6) + 14; // Schaden zwischen 14-20
+                    let dmg = Math.floor(Math.random() * 6) + 14; 
                     showDmgText("-" + dmg);
 
-                    // 4. Wildschwein stirbt/verschwindet kurz nach dem Treffer
+                    // 4. Wildschwein stirbt und der Loot-Sound ertönt
                     loopTimer = setTimeout(() => {
                         if (!gameLoopRunning) return;
                         enemy.style.display = "none";
+                        playSound('snd-loot');
 
-                        // 5. Kurze Pause vor der nächsten Runde, dann geht es von vorne los!
+                        // 5. Kurze Verschnaufpause, dann nächste Runde!
                         loopTimer = setTimeout(() => {
                             runRpgGameplayLoop();
-                        }, 1000);
+                        }, 1200);
 
                     }, 300);
 
