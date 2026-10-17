@@ -9,14 +9,20 @@
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
         body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Georgia', serif; color: #fff; }
+        
+        /* Start-Sperre für Browser-Audio */
+        #audio-unlocker { position: absolute; width: 100%; height: 100%; background: #0c0a08; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background-size: cover; background-position: center; z-index: 10; }
         .active-screen { display: flex !important; }
         #login-screen { background-image: url('login-bg.jpg'); background-color: #1a1008; }
         .login-box { background: rgba(12, 10, 8, 0.9); border: 2px solid #bd9626; box-shadow: 0 0 30px rgba(0, 0, 0, 0.9); padding: 35px; border-radius: 4px; width: 90%; max-width: 380px; text-align: center; }
         .login-title { color: #ffd700; font-size: 1.9rem; margin-bottom: 25px; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
         .login-input { width: 100%; padding: 11px; margin-bottom: 18px; background: #000; border: 1px solid #4a3c24; color: #fff; font-size: 1rem; text-align: center; }
+        
         .wow-btn { background: linear-gradient(#5a1a1a, #2b0505); border: 2px solid #bd9626; box-shadow: inset 0 0 5px #000, 0 3px 6px rgba(0,0,0,0.8); color: #ffd700; font-size: 1.05rem; font-weight: bold; padding: 10px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .wow-btn:active { transform: scale(0.97); }
+        
         #char-screen { background-image: url('char-bg.jpg'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
         .side-panel { width: 260px; height: 92%; background: rgba(12, 9, 7, 0.88); border: 2px solid #bd9626; padding: 20px; display: flex; flex-direction: column; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.7); }
         .center-panel { flex-grow: 1; height: 92%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
@@ -25,6 +31,7 @@
         .panel-title { color: #bd9626; font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #4a3c24; padding-bottom: 5px; text-transform: uppercase; }
         .char-list-item { padding: 12px; background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8)); border: 1px solid #bd9626; color: #fff; font-weight: bold; }
         .char-subtext { font-size: 0.8rem; color: #edd19c; margin-top: 3px; }
+        
         #game-screen { position: absolute; width: 100%; height: 100%; display: none; z-index: 5; }
         #game-3d-container { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 6; }
         .ui-overlay { position: absolute; z-index: 40; }
@@ -38,11 +45,17 @@
 </head>
 <body>
 
+    <!-- 0. SYSTEM-FREISCHALTUNG (AUDIO & INTERAKTION) -->
+    <div id="audio-unlocker">
+        <h1 style="color: #ffd700; margin-bottom: 20px; font-size: 2.2rem; text-shadow: 0 0 10px #000;">Craft of Worldwar</h1>
+        <button class="wow-btn" style="padding: 15px 40px; font-size: 1.2rem;" onclick="unlockGameEngine()">Spiel Starten</button>
+    </div>
+
     <!-- AUDIO PLAYER -->
     <audio id="login-theme" loop src="fx_login_darkportal_loop.ogg"></audio>
 
     <!-- 1. LOGIN SCREEN -->
-    <div id="login-screen" class="screen active-screen" onclick="startMusic()">
+    <div id="login-screen" class="screen">
         <div class="login-box">
             <h1 class="login-title">Craft of Worldwar</h1>
             <input type="text" class="login-input" value="Wiqqs" readonly>
@@ -91,13 +104,18 @@
     <script>
         let charScene, charCamera, charRenderer, charModel, charMixer;
         let gameScene, gameCamera, gameRenderer, playerModel, boarModel, floorMesh;
-        let activeScreen = "login";
+        let activeScreen = "loading";
         let isMouseDown = false, previousMousePosition = { x: 0 };
         let gameLoopRunning = false, combatTimer = null, isMovingToEnemy = false;
 
-        function startMusic() {
+        function unlockGameEngine() {
+            document.getElementById('audio-unlocker').style.display = 'none';
+            document.getElementById('login-screen').classList.add('active-screen');
+            activeScreen = "login";
+            
+            // Startet die Musik sauber nach dem Klick
             const music = document.getElementById('login-theme');
-            if(music.paused) music.play().catch(e => console.log("Audio blockiert"));
+            music.play().catch(e => console.log("Audio-Fehler: Datei fehlt oder Name falsch. Checke fx_login_darkportal_loop.ogg"));
         }
 
         window.addEventListener('keydown', function(e) {
@@ -122,6 +140,8 @@
                 document.getElementById('char-screen').classList.remove('active-screen');
                 document.getElementById('login-screen').classList.add('active-screen');
                 activeScreen = "login";
+                const music = document.getElementById('login-theme');
+                music.play().catch(e => {});
             }
         }
 
@@ -168,6 +188,8 @@
                     charMixer = new THREE.AnimationMixer(charModel);
                     charMixer.clipAction(gltf.animations).play();
                 }
+            }, undefined, function(error) {
+                console.error("Kritischer Ladefehler: 'orcmale.glb' konnte auf deinem GitHub-Server nicht gefunden werden.");
             });
 
             container.addEventListener('mousedown', () => isMouseDown = true);
@@ -222,6 +244,8 @@
                 floorMesh = new THREE.Mesh(floorGeo, floorMat);
                 floorMesh.rotation.x = -Math.PI / 2;
                 gameScene.add(floorMesh);
+            }, undefined, function(err) {
+                console.error("Texturfehler: 'durotardirt.png' fehlt auf GitHub.");
             });
 
             const loader = new THREE.GLTFLoader();
@@ -236,6 +260,8 @@
                 boarModel = gltf.scene;
                 resetBoarPosition();
                 gameScene.add(boarModel);
+            }, undefined, function(err) {
+                console.error("Model-Fehler: 'boar.glb' fehlt auf GitHub.");
             });
 
             gameLoopRunning = true;
