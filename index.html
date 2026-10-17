@@ -4,65 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Craft of Worldwar - 3D RPG Edition</title>
-    <script src="https://cloudflare.com"></script>
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
         body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Georgia', serif; color: #fff; }
         
-        /* Start-Bildschirm */
         #audio-unlocker { position: absolute; width: 100%; height: 100%; background: #0c0a08; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        /* Bildschirme */
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background-size: cover; background-position: center; z-index: 10; }
         .active-screen { display: flex !important; }
         
-        /* Hintergründe */
         #login-screen { background-image: url('login-bg.jpg'); background-color: #1a1008; }
         #char-screen { background-image: url('char-bg.png'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
         #game-screen { background-image: url('char-bg.png'); background-color: #15100e; position: absolute; width: 100%; height: 100%; display: none; z-index: 5; overflow: hidden; }
         
-        /* UI Boxen */
         .login-box { background: rgba(12, 10, 8, 0.9); border: 2px solid #bd9626; box-shadow: 0 0 30px rgba(0, 0, 0, 0.9); padding: 35px; border-radius: 4px; width: 90%; max-width: 380px; text-align: center; }
         .login-title { color: #ffd700; font-size: 1.9rem; margin-bottom: 25px; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
         .login-input { width: 100%; padding: 11px; margin-bottom: 18px; background: #000; border: 1px solid #4a3c24; color: #fff; font-size: 1rem; text-align: center; }
         
-        /* WoW Buttons */
         .wow-btn { background: linear-gradient(#5a1a1a, #2b0505); border: 2px solid #bd9626; box-shadow: inset 0 0 5px #000, 0 3px 6px rgba(0,0,0,0.8); color: #ffd700; font-size: 1.05rem; font-weight: bold; padding: 10px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .wow-btn:active { transform: scale(0.97); }
         
-        /* Charaktermenü Panels */
         .side-panel { width: 260px; height: 92%; background: rgba(12, 9, 7, 0.88); border: 2px solid #bd9626; padding: 20px; display: flex; flex-direction: column; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.7); }
         .center-panel { flex-grow: 1; height: 92%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
         .panel-title { color: #bd9626; font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #4a3c24; padding-bottom: 5px; text-transform: uppercase; }
         .char-list-item { padding: 12px; background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8)); border: 1px solid #bd9626; color: #fff; font-weight: bold; }
         .char-subtext { font-size: 0.8rem; color: #edd19c; margin-top: 3px; }
         
-        /* Echte 3D-Ansichtsfenster für Menü und Spiel */
         #char-3d-container { position: absolute; top: 0; left: 0; width: 100%; height: 85%; z-index: 15; cursor: grab; }
         #char-3d-container:active { cursor: grabbing; }
         #game-3d-viewport { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; }
         
-        /* UI Bars Overlay Ingame */
         .ui-overlay { position: absolute; z-index: 40; }
         .player-frame { top: 20px; left: 20px; background: rgba(10, 8, 6, 0.85); border: 2px solid #bd9626; padding: 12px; width: 230px; box-shadow: 3px 3px 10px rgba(0,0,0,0.8); }
         .bar { height: 15px; margin-top: 5px; border: 1px solid #000; font-size: 11px; text-align: center; font-weight: bold; line-height: 13px; }
         .hp-bar { background: linear-gradient(#2e7d32, #1b5e20); width: 100%; color: #fff; }
         .energy-bar { background: linear-gradient(#1565c0, #0d47a1); width: 100%; color: #fff; }
         
-        /* WoW XP-Leiste ganz unten */
         .xp-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 18px; background: #0c0a08; border-top: 2px solid #4a3c24; z-index: 50; display: flex; align-items: center; }
         .xp-bar { height: 100%; background: linear-gradient(#7b1fa2, #4a148c); width: 0%; transition: width 0.3s ease; }
         .xp-text { position: absolute; width: 100%; text-align: center; font-size: 11px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; z-index: 51; }
         
-        /* Tasche und Inventar-System */
         .bag-icon-btn { position: absolute; bottom: 30px; right: 20px; width: 48px; height: 48px; border: 2px solid #bd9626; cursor: pointer; z-index: 60; box-shadow: 0 4px 8px #000; background-size: cover; background-position: center; }
         .bag-icon-btn:active { transform: scale(0.95); }
         .inventory-window { display: none; position: absolute; bottom: 90px; right: 20px; width: 210px; background: rgba(20, 15, 12, 0.95); border: 2px solid #bd9626; padding: 12px; z-index: 65; box-shadow: 0 0 20px #000; }
         .inventory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
         .inv-slot { width: 42px; height: 42px; background: #000; border: 1px solid #4a3c24; display: flex; align-items: center; justify-content: center; font-size: 11px; position: relative; color: #ffcc80; }
         
-        /* Kampfeffekte */
         #damage-text { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 4.5rem; font-weight: bold; color: #ff2222; text-shadow: 3px 3px 6px #000; pointer-events: none; z-index: 50; display: none; font-family: 'Impact', sans-serif; animation: pop 0.4s ease-out; }
         #level-up-flash { position: absolute; width: 100%; height: 100%; background: rgba(255, 215, 0, 0.15); z-index: 45; display: none; pointer-events: none; animation: flashFade 1.5s ease-out; }
         @keyframes pop { 0% { transform: translate(-50%, -20%) scale(0.5); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
@@ -78,7 +66,6 @@
         <button class="wow-btn" style="padding: 15px 40px; font-size: 1.2rem;" onclick="unlockGameEngine()">Spiel Starten</button>
     </div>
 
-    <!-- Audio-Dateien -->
     <audio id="login-theme" loop src="fx_login_darkportal_loop.ogg"></audio>
     <audio id="snd-button" src="iuiinterfacebuttona.ogg"></audio>
     <audio id="snd-enter-world" src="ienterworlda.ogg"></audio>
@@ -112,7 +99,6 @@
             <p style="font-size: 0.9rem; color: #edd19c;">Klingenhügel<br><span style="color:#00ff00;">● Online</span></p>
         </div>
         <div class="center-panel">
-            <!-- 3D-Container mitten im Bildschirm -->
             <div id="char-3d-container"></div>
             <button class="wow-btn" style="z-index:30; margin-bottom: 45px; width: 200px;" onclick="startGame()">Welt betreten</button>
         </div>
@@ -124,10 +110,9 @@
             </div>
         </div>
     </div>
-    <div id="game-screen">
-        <!-- 3D Kampf-Viewport -->
-        <div id="game-3d-viewport"></div>
 
+    <div id="game-screen">
+        <div id="game-3d-viewport"></div>
         <div id="level-up-flash"></div>
         <div id="damage-text"></div>
         
@@ -137,14 +122,12 @@
             <div class="bar energy-bar">100 / 100</div>
         </div>
 
-        <!-- Tasche und Inventar-Interface -->
         <div id="bag-btn" class="bag-icon-btn" style="background-image: url('ui-bag-4x4.png');" onclick="toggleInventory()"></div>
         <div id="inventory-box" class="inventory-window">
             <div style="font-size: 12px; font-weight: bold; color: #ffd700; border-bottom: 1px solid #4a3c24; padding-bottom: 4px;">Rucksack (16 Plätze)</div>
             <div class="inventory-grid" id="inv-grid"></div>
         </div>
 
-        <!-- XP Leiste -->
         <div class="xp-container">
             <div class="xp-text" id="ui-xp-text">Erfahrung: 0 / 100</div>
             <div class="xp-bar" id="ui-xp-bar"></div>
@@ -158,31 +141,18 @@
     </div>
 
     <script>
-        // 3D-Variablen
         let charScene, charCamera, charRenderer, charModel, charMixer;
         let gameScene, gameCamera, gameRenderer, gameHeroModel, gameBoarModel, gameHeroMixer, gameBoarMixer;
-        
-        let activeScreen = "loading";
-        let gameLoopRunning = false;
-        let loopTimer = null;
-        let isMouseDown = false;
-        let previousMousePosition = { x: 0 };
-        
-        // RPG Variablen
-        let pLevel = 1; let pXp = 0; let xpNeeded = 100; let meatCount = 0;
+        let activeScreen = "loading", gameLoopRunning = false, loopTimer = null, isMouseDown = false, previousMousePosition = { x: 0 };
+        let pLevel = 1, pXp = 0, xpNeeded = 100, meatCount = 0;
 
         function playSound(id) {
             const snd = document.getElementById(id);
             if (snd) { snd.currentTime = 0; snd.play().catch(e => {}); }
         }
 
-        function playRandomOrcAttack() {
-            playSound('orc-attack-' + (Math.floor(Math.random() * 4) + 1));
-        }
-
-        function playRandomAxeHit() {
-            playSound('axe-hit-' + (Math.floor(Math.random() * 3) + 1));
-        }
+        function playRandomOrcAttack() { playSound('orc-attack-' + (Math.floor(Math.random() * 4) + 1)); }
+        function playRandomAxeHit() { playSound('axe-hit-' + (Math.floor(Math.random() * 3) + 1)); }
 
         function unlockGameEngine() {
             document.getElementById('audio-unlocker').style.display = 'none';
@@ -194,10 +164,7 @@
 
         window.addEventListener('keydown', function(e) {
             if (e.key === "Escape" || e.keyCode === 27) {
-                if (activeScreen === "char" || activeScreen === "game") {
-                    playSound('snd-button');
-                    toggleEscMenu();
-                }
+                if (activeScreen === "char" || activeScreen === "game") { playSound('snd-button'); toggleEscMenu(); }
             }
         });
 
@@ -229,7 +196,7 @@
                 if(stackRemaining <= 0) break;
                 let currentStack = Math.min(stackRemaining, 5);
                 let slot = document.getElementById("slot-" + i);
-                slot.innerHTML = `🥩<span style="position:absolute; bottom:2px; right:4px; font-size:9px; font-weight:bold; color:#fff;">${currentStack}</span>`;
+                slot.innerHTML = `🥩<span style="position:absolute; bottom:2px; right:4px; font-size:9px; font-weight:bold; color:#fff;">\${currentStack}</span>`;
                 stackRemaining -= currentStack;
             }
         }
@@ -238,17 +205,14 @@
             playSound('snd-button');
             document.getElementById('esc-menu').style.display = 'none';
             if (activeScreen === "game") {
-                gameLoopRunning = false;
-                if(loopTimer) clearTimeout(loopTimer);
+                gameLoopRunning = false; if(loopTimer) clearTimeout(loopTimer);
                 document.getElementById('game-screen').style.display = 'none';
                 document.getElementById('char-screen').classList.add('active-screen');
-                activeScreen = "char";
-                setTimeout(initChar3D, 150);
+                activeScreen = "char"; setTimeout(initChar3D, 150);
             } else if (activeScreen === "char") {
                 document.getElementById('char-screen').classList.remove('active-screen');
                 document.getElementById('login-screen').classList.add('active-screen');
-                activeScreen = "login";
-                document.getElementById('login-theme').play().catch(e => {});
+                activeScreen = "login"; document.getElementById('login-theme').play().catch(e => {});
             }
         }
 
@@ -256,65 +220,46 @@
             playSound('snd-button');
             document.getElementById('login-screen').classList.remove('active-screen');
             document.getElementById('char-screen').classList.add('active-screen');
-            activeScreen = "char";
-            setTimeout(initChar3D, 150);
+            activeScreen = "char"; setTimeout(initChar3D, 150);
         }
 
-        // Überarbeiteter 3D-Größen-Kalkulator zur Vermeidung von Darstellungsfehlern
         function autoFitModelToCamera(model, desiredHeight = 1.5) {
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
-            
             model.position.x += (model.position.x - center.x);
             model.position.y += (model.position.y - box.min.y);
             model.position.z += (model.position.z - center.z);
-            
-            if (size.y > 0) {
-                const scale = desiredHeight / size.y;
-                model.scale.set(scale, scale, scale);
-            }
+            if (size.y > 0) { const scale = desiredHeight / size.y; model.scale.set(scale, scale, scale); }
             return new THREE.Vector3(0, desiredHeight / 2, 0);
         }
 
-        /* 3D Charakterauswahl */
         function initChar3D() {
             const container = document.getElementById('char-3d-container');
             if(!container || container.children.length > 0) return;
-
             charScene = new THREE.Scene();
             charCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
             charCamera.position.set(0, 0.7, 2.3);
-
             charRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             charRenderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(charRenderer.domElement);
-
-            charScene.add(new THREE.AmbientLight(0xffffff, 2.5)); // Starkes Umgebungslicht gegen schwarze Texturen
+            charScene.add(new THREE.AmbientLight(0xffffff, 2.5));
             const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
             dirLight.position.set(3, 6, 4); charScene.add(dirLight);
-
             const loader = new THREE.GLTFLoader();
             loader.load('./orcmale.glb', function(gltf) {
-                charModel = gltf.scene;
-                const targetLook = autoFitModelToCamera(charModel, 1.3);
+                charModel = gltf.scene; const targetLook = autoFitModelToCamera(charModel, 1.3);
                 charScene.add(charModel); charCamera.lookAt(targetLook);
-
                 if(gltf.animations && gltf.animations.length > 0) {
-                    charMixer = new THREE.AnimationMixer(charModel);
-                    charMixer.clipAction(gltf.animations[0]).play();
+                    charMixer = new THREE.AnimationMixer(charModel); charMixer.clipAction(gltf.animations).play();
                 }
             });
-
             container.addEventListener('mousedown', (e) => { isMouseDown = true; previousMousePosition = { x: e.clientX }; });
             window.addEventListener('mouseup', () => isMouseDown = false);
             container.addEventListener('mousemove', (e) => {
-                if (isMouseDown && charModel) {
-                    charModel.rotation.y += (e.clientX - previousMousePosition.x) * 0.015;
-                }
+                if (isMouseDown && charModel) { charModel.rotation.y += (e.clientX - previousMousePosition.x) * 0.015; }
                 previousMousePosition = { x: e.clientX };
             });
-
             const clock = new THREE.Clock();
             function animateChar() {
                 requestAnimationFrame(animateChar);
@@ -324,23 +269,104 @@
             animateChar();
         }
 
-        /* 3D Ingame Viewport */
         function initGame3D() {
             const container = document.getElementById('game-3d-viewport');
             if(container.children.length > 0) return;
-
             gameScene = new THREE.Scene();
             gameCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-            gameCamera.position.set(0, 1.2, 4.5); // Seitliche Murloc RPG Kamerapositionierung
-
+            gameCamera.position.set(0, 1.2, 4.5);
             gameRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             gameRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(gameRenderer.domElement);
-
             gameScene.add(new THREE.AmbientLight(0xffffff, 2.8));
             const light = new THREE.DirectionalLight(0xffffff, 2.0); light.position.set(0, 5, 5); gameScene.add(light);
-
             const loader = new THREE.GLTFLoader();
-            
-            // 3D-Held links laden
             loader.load('./orcmale.glb', function(gltf) {
+                gameHeroModel = gltf.scene; autoFitModelToCamera(gameHeroModel, 1.4);
+                gameHeroModel.position.set(-1.8, 0, 0); gameHeroModel.rotation.y = Math.PI / 2; gameScene.add(gameHeroModel);
+                if(gltf.animations && gltf.animations.length > 0) {
+                    gameHeroMixer = new THREE.AnimationMixer(gameHeroModel); gameHeroMixer.clipAction(gltf.animations).play();
+                }
+            });
+            loader.load('./boar.glb', function(gltf) {
+                gameBoarModel = gltf.scene; autoFitModelToCamera(gameBoarModel, 0.9);
+                gameBoarModel.position.set(1.8, 0, 0); gameBoarModel.rotation.y = -Math.PI / 2; gameScene.add(gameBoarModel);
+                if(gltf.animations && gltf.animations.length > 0) {
+                    gameBoarMixer = new THREE.AnimationMixer(gameBoarModel); gameBoarMixer.clipAction(gltf.animations).play();
+                }
+            });
+            const clock = new THREE.Clock();
+            function animateGame() {
+                requestAnimationFrame(animateGame); let delta = clock.getDelta();
+                if(gameHeroMixer) gameHeroMixer.update(delta);
+                if(gameBoarMixer) gameBoarMixer.update(delta);
+                if(gameRenderer) gameRenderer.render(gameScene, gameCamera);
+            }
+            animateGame();
+        }
+
+        function startGame() {
+            playSound('snd-enter-world'); document.getElementById('login-theme').pause();
+            document.getElementById('char-screen').classList.remove('active-screen');
+            document.getElementById('game-screen').style.display = 'block'; activeScreen = "game";
+            setTimeout(() => { initGame3D(); gameLoopRunning = true; runRpgGameplayLoop(); }, 150);
+        }
+
+        function runRpgGameplayLoop() {
+            if (!gameLoopRunning) return;
+            if(gameHeroModel) { gameHeroModel.position.x = -1.8; }
+            if(gameBoarModel) { gameBoarModel.visible = true; }
+            playSound('boar-aggro');
+            loopTimer = setTimeout(() => {
+                if (!gameLoopRunning) return;
+                let chargeInterval = setInterval(() => {
+                    if(gameHeroModel && gameHeroModel.position.x < 0.9) { gameHeroModel.position.x += 0.15; } else { clearInterval(chargeInterval); }
+                }, 20);
+                playRandomOrcAttack();
+                loopTimer = setTimeout(() => {
+                    if (!gameLoopRunning) return;
+                    let dmg = Math.floor(Math.random() * 6) + 14; showDmgText("-" + dmg); playRandomAxeHit();
+                    loopTimer = setTimeout(() => {
+                        if (!gameLoopRunning) return;
+                        if(gameBoarModel) gameBoarModel.visible = false;
+                        playSound('boar-death'); playSound('snd-loot'); addLootToInventory(); addExperiencePoints(35);
+                        loopTimer = setTimeout(() => { runRpgGameplayLoop(); }, 1400);
+                    }, 300);
+                }, 400);
+            }, 1200);
+        }
+
+        function addExperiencePoints(amount) {
+            pXp += amount;
+            if (pXp >= xpNeeded) {
+                pXp -= xpNeeded; pLevel++; xpNeeded = Math.floor(xpNeeded * 1.3); playSound('snd-levelup');
+                const flash = document.getElementById('level-up-flash'); flash.style.display = 'block';
+                setTimeout(() => { flash.style.display = 'none'; }, 1500);
+                document.getElementById('ui-hero-name').innerText = `Wiqqs (Stufe \${pLevel})`;
+                document.getElementById('menu-char-level').innerText = `Stufe \${pLevel} Orc Krieger`;
+            }
+            document.getElementById('ui-xp-bar').style.width = ((pXp / xpNeeded) * 100) + "%";
+            document.getElementById('ui-xp-text').innerText = `Erfahrung: \${pXp} / \${xpNeeded}`;
+        }
+
+        function showDmgText(text) {
+            const el = document.getElementById('damage-text'); el.innerText = text; el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 600);
+        }
+
+        window.addEventListener('resize', () => {
+            if (charRenderer && charCamera) {
+                const container = document.getElementById('char-3d-container');
+                if (container && container.clientWidth > 0) {
+                    charCamera.aspect = container.clientWidth / container.clientHeight; charCamera.updateProjectionMatrix();
+                    charRenderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            }
+            if (gameRenderer && gameCamera) {
+                gameCamera.aspect = window.innerWidth / window.innerHeight; gameCamera.updateProjectionMatrix();
+                gameRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+    </script>
+</body>
+</html>
