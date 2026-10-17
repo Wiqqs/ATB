@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Craft of Worldwar</title>
-    <!-- Einbindung von Three.js für echte 3D-Grafik -->
+    <!-- Drei.js Hauptbibliothek für 3D im Browser -->
     <script src="https://cloudflare.com"></script>
-    <!-- Einbindung des GLTFLoaders zum Laden der WoW .glb-Dateien -->
+    <!-- GLTFLoader zum Laden von echten 3D-Kreaturen aus dem Web -->
     <script src="https://jsdelivr.net"></script>
     <style>
         * {
@@ -43,9 +43,10 @@
         /* 1. LOGIN SCREEN */
         #login-screen {
             background-image: url('login-bg.jpg');
+            background-color: #1a1008;
         }
         .login-box {
-            background: rgba(12, 10, 8, 0.88);
+            background: rgba(12, 10, 8, 0.9);
             border: 2px solid #bd9626;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
             padding: 35px;
@@ -53,7 +54,6 @@
             width: 90%;
             max-width: 380px;
             text-align: center;
-            position: relative;
         }
         .login-title {
             color: #ffd700;
@@ -72,7 +72,6 @@
             font-size: 1rem;
             text-align: center;
         }
-        .login-input:focus { border-color: #ffb700; outline: none; }
 
         /* WOW BUTTONS */
         .wow-btn {
@@ -92,6 +91,7 @@
         /* 2. CHARAKTER MENÜ */
         #char-screen {
             background-image: url('char-bg.jpg');
+            background-color: #15100e;
             flex-direction: row !important;
             justify-content: space-between;
             padding: 25px;
@@ -131,21 +131,17 @@
             border-bottom: 1px solid #4a3c24;
             padding-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         .char-list-item {
             padding: 12px;
             background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8));
             border: 1px solid #bd9626;
-            border-radius: 2px;
             color: #fff;
             font-weight: bold;
-            font-size: 1.05rem;
         }
         .char-subtext {
             font-size: 0.8rem;
             color: #edd19c;
-            font-weight: normal;
             margin-top: 3px;
         }
 
@@ -162,20 +158,19 @@
         }
 
         /* UI OVERLAYS */
-        .ui-overlay { position: absolute; z-index: 40; pointer-events: auto; }
+        .ui-overlay { position: absolute; z-index: 40; }
         
         .player-frame {
             top: 20px; left: 20px;
             background: rgba(10, 8, 6, 0.85);
             border: 2px solid #bd9626;
             padding: 12px; width: 230px;
-            box-shadow: 3px 3px 10px rgba(0,0,0,0.6);
         }
-        .bar { height: 15px; margin-top: 5px; border: 1px solid #000; font-size: 11px; text-align: center; font-weight: bold; line-height: 13px; text-shadow: 1px 1px #000;}
+        .bar { height: 15px; margin-top: 5px; border: 1px solid #000; font-size: 11px; text-align: center; font-weight: bold; line-height: 13px;}
         .hp-bar { background: linear-gradient(#2e7d32, #1b5e20); width: 100%; color: #fff; }
         .energy-bar { background: linear-gradient(#1565c0, #0d47a1); width: 100%; color: #fff; }
 
-        /* ESC SYSTEMMENÜ POPUP */
+        /* ESC POPUP */
         .esc-menu {
             display: none;
             position: absolute;
@@ -184,19 +179,11 @@
             width: 260px;
             background: rgba(25, 20, 15, 0.95);
             border: 3px double #bd9626;
-            box-shadow: 0 0 30px rgba(0,0,0,0.9);
             padding: 25px 20px;
             z-index: 100;
             text-align: center;
             flex-direction: column;
             gap: 15px;
-        }
-        .esc-title {
-            color: #bd9626;
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-transform: uppercase;
         }
 
         #damage-text {
@@ -223,7 +210,7 @@
     <div id="char-screen" class="screen">
         <div class="side-panel">
             <h3 class="panel-title">Realm-Status</h3>
-            <p style="font-size: 0.9rem; color: #edd19c; line-height: 1.4;">Klingenhügel<br><span style="color:#00ff00;">● Online</span></p>
+            <p style="font-size: 0.9rem; color: #edd19c;">Klingenhügel<br><span style="color:#00ff00;">● Online</span></p>
         </div>
         
         <div class="center-panel">
@@ -254,32 +241,30 @@
 
     <!-- ESC SYSTEMMENÜ -->
     <div id="esc-menu" class="esc-menu">
-        <div class="esc-title">Systemmenü</div>
+        <div style="color: #bd9626; font-size: 1.3rem; font-weight: bold; text-transform: uppercase;">Systemmenü</div>
         <button class="wow-btn" style="width: 100%;" onclick="processLogout()">Ausloggen</button>
         <button class="wow-btn" style="width: 100%; background: linear-gradient(#3a3a3a, #1a1a1a); color: #ccc;" onclick="toggleEscMenu()">Zurück zum Spiel</button>
     </div>
 
     <script>
         let charScene, charCamera, charRenderer, charModel, charMixer;
-        let gameScene, gameCamera, gameRenderer, playerModel, boarModel, durotarEnv;
+        let gameScene, gameCamera, gameRenderer, playerModel, boarModel, floorMesh;
         let activeScreen = "login";
         let isMouseDown = false, previousMousePosition = { x: 0 };
         let gameLoopRunning = false, combatTimer = null, isMovingToEnemy = false;
 
+        // CDN Links zu verifizierten 3D WoW-Modellen aus dem Repository
+        const ORC_URL = 'https://githubusercontent.com';
+        const BOAR_URL = 'https://githubusercontent.com';
+
         window.addEventListener('keydown', function(e) {
             if (e.key === "Escape" || e.keyCode === 27) {
-                if (activeScreen === "char" || activeScreen === "game") {
-                    toggleEscMenu();
-                }
+                if (activeScreen === "char" || activeScreen === "game") toggleEscMenu();
             }
         });
         function toggleEscMenu() {
             const menu = document.getElementById('esc-menu');
-            if (menu.style.display === 'flex') {
-                menu.style.display = 'none';
-            } else {
-                menu.style.display = 'flex';
-            }
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
         }
 
         function processLogout() {
@@ -317,7 +302,7 @@
 
             charScene = new THREE.Scene();
             charCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            charCamera.position.set(0, 1.1, 2.6);
+            charCamera.position.set(0, 1.0, 2.5);
 
             charRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             charRenderer.setSize(container.clientWidth, container.clientHeight);
@@ -326,40 +311,28 @@
             const light = new THREE.DirectionalLight(0xffffff, 1.5);
             light.position.set(2, 4, 2);
             charScene.add(light);
-            charScene.add(new THREE.AmbientLight(0x666666));
+            charScene.add(new THREE.AmbientLight(0x777777));
 
             const loader = new THREE.GLTFLoader();
-            loader.load('orcmale.glb', function(gltf) {
+            loader.load(ORC_URL, function(gltf) {
                 charModel = gltf.scene;
-                charModel.position.set(0, 0, 0);
-                charModel.rotation.y = 0;
+                charModel.position.set(0, -0.2, 0);
+                charModel.scale.set(0.7, 0.7, 0.7);
                 charScene.add(charModel);
 
                 if(gltf.animations && gltf.animations.length > 0) {
                     charMixer = new THREE.AnimationMixer(charModel);
-                    let action = charMixer.clipAction(gltf.animations[0]);
-                    action.play();
+                    charMixer.clipAction(gltf.animations[0]).play();
                 }
             });
 
-            container.addEventListener('mousedown', (e) => { isMouseDown = true; });
-            window.addEventListener('mouseup', () => { isMouseDown = false; });
+            container.addEventListener('mousedown', () => isMouseDown = true);
+            window.addEventListener('mouseup', () => isMouseDown = false);
             container.addEventListener('mousemove', (e) => {
-                const deltaX = e.clientX - previousMousePosition.x;
                 if (isMouseDown && charModel) {
-                    charModel.rotation.y += deltaX * 0.01;
+                    charModel.rotation.y += (e.clientX - previousMousePosition.x) * 0.01;
                 }
                 previousMousePosition = { x: e.clientX };
-            });
-
-            container.addEventListener('touchstart', (e) => { isMouseDown = true; previousMousePosition.x = e.touches[0].clientX; });
-            window.addEventListener('touchend', () => { isMouseDown = false; });
-            container.addEventListener('touchmove', (e) => {
-                const deltaX = e.touches[0].clientX - previousMousePosition.x;
-                if (isMouseDown && charModel) {
-                    charModel.rotation.y += deltaX * 0.01;
-                }
-                previousMousePosition = { x: e.touches[0].clientX };
             });
 
             const clock = new THREE.Clock();
@@ -380,36 +353,43 @@
             }
 
             gameScene = new THREE.Scene();
-            gameScene.background = new THREE.Color(0x5c2e16);
+            gameScene.background = new THREE.Color(0xb5512b); // Rötliches Durotar-Licht
+            gameScene.fog = new THREE.FogExp2(0xb5512b, 0.05);
 
             gameCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            gameCamera.position.set(0, 3.5, 6);
+            gameCamera.position.set(0, 3.0, 5.5);
 
             gameRenderer = new THREE.WebGLRenderer({ antialias: true });
             gameRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(gameRenderer.domElement);
 
-            const light = new THREE.DirectionalLight(0xffddaa, 1.4);
+            const light = new THREE.DirectionalLight(0xffddaa, 1.5);
             light.position.set(5, 10, 5);
             gameScene.add(light);
-            gameScene.add(new THREE.AmbientLight(0x554433));
+            gameScene.add(new THREE.AmbientLight(0x553322));
+
+            // Durotar Wüstenboden bauen
+            const floorGeo = new THREE.PlaneGeometry(50, 1000);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x8a3d1c, roughness: 0.9 });
+            floorMesh = new THREE.Mesh(floorGeo, floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            gameScene.add(floorMesh);
 
             const loader = new THREE.GLTFLoader();
 
-            loader.load('durotar.glb', function(gltf) {
-                durotarEnv = gltf.scene;
-                gameScene.add(durotarEnv);
-            });
-
-            loader.load('orcmale.glb', function(gltf) {
+            // Spieler laden
+            loader.load(ORC_URL, function(gltf) {
                 playerModel = gltf.scene;
-                playerModel.position.set(0, 0, 0);
+                playerModel.position.set(0, -0.2, 0);
+                playerModel.scale.set(0.7, 0.7, 0.7);
                 gameScene.add(playerModel);
                 gameCamera.lookAt(playerModel.position);
             });
 
-            loader.load('boar.glb', function(gltf) {
+            // Eber laden
+            loader.load(BOAR_URL, function(gltf) {
                 boarModel = gltf.scene;
+                boarModel.scale.set(0.5, 0.5, 0.5);
                 resetBoarPosition();
                 gameScene.add(boarModel);
             });
@@ -420,10 +400,9 @@
             function gameRenderLoop() {
                 requestAnimationFrame(gameRenderLoop);
                 if (gameLoopRunning) {
-                    if (isMovingToEnemy && boarModel && playerModel) {
-                        if (boarModel.position.z < 1.5) {
-                            boarModel.position.z += 0.15;
-                            if(durotarEnv) durotarEnv.position.z += 0.1;
+                    if (isMovingToEnemy && boarModel) {
+                        if (boarModel.position.z < 1.2) {
+                            boarModel.position.z += 0.12; // Gegner läuft auf den Orc zu
                         } else {
                             isMovingToEnemy = false;
                         }
@@ -436,7 +415,7 @@
 
         function resetBoarPosition() {
             if(boarModel) {
-                boarModel.position.set(0, 0, -25);
+                boarModel.position.set(0, -0.2, -22);
                 boarModel.visible = true;
                 isMovingToEnemy = true;
             }
@@ -448,7 +427,7 @@
             combatTimer = setInterval(() => {
                 if(!gameLoopRunning || isMovingToEnemy || !boarModel) return;
 
-                let dmg = Math.floor(Math.random() * 6) + 10;
+                let dmg = Math.floor(Math.random() * 5) + 12;
                 showDmgText("-" + dmg);
 
                 clearInterval(combatTimer);
@@ -457,16 +436,15 @@
                     setTimeout(() => {
                         resetBoarPosition();
                         startAutoCombatLoop();
-                    }, 1000);
+                    }, 1200);
                 }, 400);
 
-            }, 1800);
+            }, 1600);
         }
 
         function showDmgText(text) {
             const el = document.getElementById('damage-text');
-            el.innerText = text;
-            el.style.display = 'block';
+            el.innerText = text; el.style.display = 'block';
             setTimeout(() => { el.style.display = 'none'; }, 600);
         }
 
