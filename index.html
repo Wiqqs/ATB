@@ -10,13 +10,11 @@
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
         body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Georgia', serif; color: #fff; }
         
-        /* Start-Sperre für Browser-Audio */
         #audio-unlocker { position: absolute; width: 100%; height: 100%; background: #0c0a08; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
         .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background-size: cover; background-position: center; z-index: 10; }
         .active-screen { display: flex !important; }
         
-        /* EXAKT AN DEINE DATEIEN ANGEPASST */
         #login-screen { background-image: url('login-bg.jpg'); background-color: #1a1008; }
         #char-screen { background-image: url('char-bg.png'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
         
@@ -117,7 +115,7 @@
             activeScreen = "login";
             
             const music = document.getElementById('login-theme');
-            music.play().catch(e => console.log("Audio blockiert oder Datei fehlt"));
+            music.play().catch(e => console.log("Audio blockiert"));
         }
 
         window.addEventListener('keydown', function(e) {
@@ -163,32 +161,51 @@
             initMainGame3D();
         }
 
+        // Hilfsfunktion: Passt JEDES Modell automatisch an das Sichtfeld an (Ausfallschutz)
+        function autoFitModelToCamera(model, desiredHeight = 1.5) {
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            
+            // Setzt den Mittelpunkt auf Null zurück
+            model.position.x += (model.position.x - center.x);
+            model.position.y += (model.position.y - box.min.y); // Steht auf dem Boden
+            model.position.z += (model.position.z - center.z);
+            
+            // Skaliert das Modell auf eine normale menschliche Größe
+            if (size.y > 0) {
+                const scale = desiredHeight / size.y;
+                model.scale.set(scale, scale, scale);
+            }
+        }
+
         function initChar3D() {
             const container = document.getElementById('char-3d-container');
             if(container.children.length > 0) return;
 
             charScene = new THREE.Scene();
             charCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-            charCamera.position.set(0, 1.1, 2.6);
+            charCamera.position.set(0, 0.8, 2.5);
 
             charRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
             charRenderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(charRenderer.domElement);
 
-            const light = new THREE.DirectionalLight(0xffffff, 1.5);
-            light.position.set(2, 4, 2);
-            charScene.add(light);
-            charScene.add(new THREE.AmbientLight(0x777777));
+            // MASSIV ERHÖHTES LICHT (Gegen Blackscreens)
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            dirLight.position.set(3, 6, 4);
+            charScene.add(dirLight);
+            charScene.add(new THREE.AmbientLight(0xffffff, 1.5));
 
             const loader = new THREE.GLTFLoader();
             loader.load('orcmale.glb', function(gltf) {
                 charModel = gltf.scene;
-                charModel.position.set(0, 0, 0);
+                autoFitModelToCamera(charModel, 1.4); // Automatische Skalierung aktiv!
                 charScene.add(charModel);
 
                 if(gltf.animations && gltf.animations.length > 0) {
                     charMixer = new THREE.AnimationMixer(charModel);
-                    charMixer.clipAction(gltf.animations).play();
+                    charMixer.clipAction(gltf.animations[0]).play();
                 }
             });
 
@@ -220,22 +237,22 @@
 
             gameScene = new THREE.Scene();
             gameScene.background = new THREE.Color(0x331a0e);
-            gameScene.fog = new THREE.FogExp2(0x331a0e, 0.04);
+            gameScene.fog = new THREE.FogExp2(0x331a0e, 0.02);
 
             gameCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            gameCamera.position.set(0, 3.5, 6);
+            gameCamera.position.set(0, 2.5, 5);
 
             gameRenderer = new THREE.WebGLRenderer({ antialias: true });
             gameRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(gameRenderer.domElement);
 
-            const light = new THREE.DirectionalLight(0xffffff, 1.4);
-            light.position.set(5, 10, 5);
-            gameScene.add(light);
-            gameScene.add(new THREE.AmbientLight(0x666666));
+            // FLUTLICHT INGAME
+            const gameLight = new THREE.DirectionalLight(0xffffff, 2.5);
+            gameLight.position.set(5, 12, 6);
+            gameScene.add(gameLight);
+            gameScene.add(new THREE.AmbientLight(0xffffff, 1.4));
 
             const textureLoader = new THREE.TextureLoader();
-            // KORRIGIERT auf deine durotardirt.png Datei
             textureLoader.load('durotardirt.png', function(texture) {
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
@@ -244,19 +261,24 @@
                 const floorMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
                 floorMesh = new THREE.Mesh(floorGeo, floorMat);
                 floorMesh.rotation.x = -Math.PI / 2;
+                floorMesh.position.y = -0.1;
                 gameScene.add(floorMesh);
             });
 
             const loader = new THREE.GLTFLoader();
+            
+            // Orc Ingame laden & anpassen
             loader.load('orcmale.glb', function(gltf) {
                 playerModel = gltf.scene;
-                playerModel.position.set(0, 0, 0);
+                autoFitModelToCamera(playerModel, 1.4);
                 gameScene.add(playerModel);
-                gameCamera.lookAt(playerModel.position);
+                gameCamera.lookAt(new THREE.Vector3(0, 0.6, 0));
             });
 
+            // Eber Ingame laden & anpassen
             loader.load('boar.glb', function(gltf) {
                 boarModel = gltf.scene;
+                autoFitModelToCamera(boarModel, 0.8);
                 resetBoarPosition();
                 gameScene.add(boarModel);
             });
@@ -268,7 +290,7 @@
                 requestAnimationFrame(gameRenderLoop);
                 if (gameLoopRunning) {
                     if (isMovingToEnemy && boarModel) {
-                        if (boarModel.position.z < 1.4) {
+                        if (boarModel.position.z < 1.2) {
                             boarModel.position.z += 0.16;
                             if(floorMesh) floorMesh.position.z += 0.08;
                         } else {
