@@ -4,200 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Craft of Worldwar</title>
-    <!-- Drei.js Hauptbibliothek für 3D im Browser -->
     <script src="https://cloudflare.com"></script>
-    <!-- GLTFLoader zum Laden deiner eigenen .glb-Dateien -->
     <script src="https://jsdelivr.net"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            margin: 0;
-            padding: 0;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Georgia', serif;
-            color: #fff;
-        }
-        .screen {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-size: cover;
-            background-position: center;
-            z-index: 10;
-        }
-        .active-screen {
-            display: flex !important;
-        }
-
-        /* 1. LOGIN SCREEN */
-        #login-screen {
-            background-image: url('login-bg.jpg');
-            background-color: #1a1008;
-        }
-        .login-box {
-            background: rgba(12, 10, 8, 0.9);
-            border: 2px solid #bd9626;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
-            padding: 35px;
-            border-radius: 4px;
-            width: 90%;
-            max-width: 380px;
-            text-align: center;
-        }
-        .login-title {
-            color: #ffd700;
-            font-size: 1.9rem;
-            margin-bottom: 25px;
-            letter-spacing: 1px;
-            text-shadow: 2px 2px 4px #000;
-        }
-        .login-input {
-            width: 100%;
-            padding: 11px;
-            margin-bottom: 18px;
-            background: #000;
-            border: 1px solid #4a3c24;
-            color: #fff;
-            font-size: 1rem;
-            text-align: center;
-        }
-
-        /* WOW BUTTONS */
-        .wow-btn {
-            background: linear-gradient(#5a1a1a, #2b0505);
-            border: 2px solid #bd9626;
-            box-shadow: inset 0 0 5px #000, 0 3px 6px rgba(0,0,0,0.8);
-            color: #ffd700;
-            font-size: 1.05rem;
-            font-weight: bold;
-            padding: 10px 25px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Georgia', serif; color: #fff; }
+        .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; background-size: cover; background-position: center; z-index: 10; }
+        .active-screen { display: flex !important; }
+        #login-screen { background-image: url('login-bg.jpg'); background-color: #1a1008; }
+        .login-box { background: rgba(12, 10, 8, 0.9); border: 2px solid #bd9626; box-shadow: 0 0 30px rgba(0, 0, 0, 0.9); padding: 35px; border-radius: 4px; width: 90%; max-width: 380px; text-align: center; }
+        .login-title { color: #ffd700; font-size: 1.9rem; margin-bottom: 25px; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
+        .login-input { width: 100%; padding: 11px; margin-bottom: 18px; background: #000; border: 1px solid #4a3c24; color: #fff; font-size: 1rem; text-align: center; }
+        .wow-btn { background: linear-gradient(#5a1a1a, #2b0505); border: 2px solid #bd9626; box-shadow: inset 0 0 5px #000, 0 3px 6px rgba(0,0,0,0.8); color: #ffd700; font-size: 1.05rem; font-weight: bold; padding: 10px 25px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
         .wow-btn:active { transform: scale(0.97); }
-
-        /* 2. CHARAKTER MENÜ (Fehler behoben!) */
-        #char-screen {
-            background-image: url('char-bg.jpg');
-            background-color: #15100e;
-            flex-direction: row !important;
-            justify-content: space-between;
-            padding: 25px;
-        }
-        .side-panel {
-            width: 260px;
-            height: 92%;
-            background: rgba(12, 9, 7, 0.88);
-            border: 2px solid #bd9626;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            z-index: 20;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7);
-        }
-        .center-panel {
-            flex-grow: 1;
-            height: 92%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            position: relative;
-        }
-        #char-3d-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 85%;
-            z-index: 15;
-            cursor: grab;
-        }
+        #char-screen { background-image: url('char-bg.jpg'); background-color: #15100e; flex-direction: row !important; justify-content: space-between; padding: 25px; }
+        .side-panel { width: 260px; height: 92%; background: rgba(12, 9, 7, 0.88); border: 2px solid #bd9626; padding: 20px; display: flex; flex-direction: column; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.7); }
+        .center-panel { flex-grow: 1; height: 92%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
+        #char-3d-container { position: absolute; top: 0; left: 0; width: 100%; height: 85%; z-index: 15; cursor: grab; }
         #char-3d-container:active { cursor: grabbing; }
-        
-        .panel-title {
-            color: #bd9626;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #4a3c24;
-            padding-bottom: 5px;
-            text-transform: uppercase;
-        }
-        .char-list-item {
-            padding: 12px;
-            background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8));
-            border: 1px solid #bd9626;
-            color: #fff;
-            font-weight: bold;
-        }
-        .char-subtext {
-            font-size: 0.8rem;
-            color: #edd19c;
-            margin-top: 3px;
-        }
-
-        /* 3. GAMEPLAY SCREEN */
-        #game-screen {
-            position: absolute;
-            width: 100%; height: 100%;
-            display: none;
-            z-index: 5;
-        }
-        #game-3d-container {
-            width: 100%; height: 100%;
-            position: absolute; top:0; left:0; z-index: 6;
-        }
-
-        /* UI OVERLAYS */
+        .panel-title { color: #bd9626; font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #4a3c24; padding-bottom: 5px; text-transform: uppercase; }
+        .char-list-item { padding: 12px; background: linear-gradient(rgba(45, 33, 22, 0.6), rgba(20, 14, 9, 0.8)); border: 1px solid #bd9626; color: #fff; font-weight: bold; }
+        .char-subtext { font-size: 0.8rem; color: #edd19c; margin-top: 3px; }
+        #game-screen { position: absolute; width: 100%; height: 100%; display: none; z-index: 5; }
+        #game-3d-container { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 6; }
         .ui-overlay { position: absolute; z-index: 40; }
-        
-        .player-frame {
-            top: 20px; left: 20px;
-            background: rgba(10, 8, 6, 0.85);
-            border: 2px solid #bd9626;
-            padding: 12px; width: 230px;
-        }
+        .player-frame { top: 20px; left: 20px; background: rgba(10, 8, 6, 0.85); border: 2px solid #bd9626; padding: 12px; width: 230px; }
         .bar { height: 15px; margin-top: 5px; border: 1px solid #000; font-size: 11px; text-align: center; font-weight: bold; line-height: 13px;}
         .hp-bar { background: linear-gradient(#2e7d32, #1b5e20); width: 100%; color: #fff; }
         .energy-bar { background: linear-gradient(#1565c0, #0d47a1); width: 100%; color: #fff; }
-
-        /* ESC POPUP */
-        .esc-menu {
-            display: none;
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 260px;
-            background: rgba(25, 20, 15, 0.95);
-            border: 3px double #bd9626;
-            padding: 25px 20px;
-            z-index: 100;
-            text-align: center;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        #damage-text {
-            position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 3.5rem; font-weight: bold; color: #ff2222;
-            text-shadow: 2px 2px 4px #000; pointer-events: none; z-index: 50; display: none;
-            font-family: 'Impact', sans-serif;
-        }
+        .esc-menu { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 260px; background: rgba(25, 20, 15, 0.95); border: 3px double #bd9626; padding: 25px 20px; z-index: 100; text-align: center; flex-direction: column; gap: 15px; }
+        #damage-text { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: bold; color: #ff2222; text-shadow: 2px 2px 4px #000; pointer-events: none; z-index: 50; display: none; font-family: 'Impact', sans-serif; }
     </style>
 </head>
 <body>
 
+    <!-- AUDIO PLAYER -->
+    <audio id="login-theme" loop src="fx_login_darkportal_loop.ogg"></audio>
+
     <!-- 1. LOGIN SCREEN -->
-    <div id="login-screen" class="screen active-screen">
+    <div id="login-screen" class="screen active-screen" onclick="startMusic()">
         <div class="login-box">
             <h1 class="login-title">Craft of Worldwar</h1>
             <input type="text" class="login-input" value="Wiqqs" readonly>
@@ -212,12 +57,10 @@
             <h3 class="panel-title">Realm-Status</h3>
             <p style="font-size: 0.9rem; color: #edd19c;">Klingenhügel<br><span style="color:#00ff00;">● Online</span></p>
         </div>
-        
         <div class="center-panel">
             <div id="char-3d-container"></div>
             <button class="wow-btn" style="z-index:30; margin-bottom: 25px; width: 200px;" onclick="startGame()">Welt betreten</button>
         </div>
-
         <div class="side-panel">
             <h3 class="panel-title">Charaktere</h3>
             <div class="char-list-item">
@@ -231,7 +74,6 @@
     <div id="game-screen">
         <div id="game-3d-container"></div>
         <div id="damage-text"></div>
-
         <div class="ui-overlay player-frame">
             <div style="font-weight: bold; color: #ffd700; font-size: 1.05rem;">Wiqqs <span style="color:#fff; font-size:0.85rem;">(Stufe 1)</span></div>
             <div class="bar hp-bar" id="ui-player-hp">120 / 120</div>
@@ -252,6 +94,11 @@
         let activeScreen = "login";
         let isMouseDown = false, previousMousePosition = { x: 0 };
         let gameLoopRunning = false, combatTimer = null, isMovingToEnemy = false;
+
+        function startMusic() {
+            const music = document.getElementById('login-theme');
+            if(music.paused) music.play().catch(e => console.log("Audio blockiert"));
+        }
 
         window.addEventListener('keydown', function(e) {
             if (e.key === "Escape" || e.keyCode === 27) {
@@ -286,6 +133,8 @@
         }
 
         function startGame() {
+            const music = document.getElementById('login-theme');
+            music.pause();
             document.getElementById('char-screen').classList.remove('active-screen');
             document.getElementById('game-screen').style.display = 'block';
             activeScreen = "game";
@@ -309,7 +158,6 @@
             charScene.add(light);
             charScene.add(new THREE.AmbientLight(0x777777));
 
-            // Lädt deine LOKALE orcmale.glb Datei von deinem Server
             const loader = new THREE.GLTFLoader();
             loader.load('orcmale.glb', function(gltf) {
                 charModel = gltf.scene;
@@ -318,28 +166,17 @@
 
                 if(gltf.animations && gltf.animations.length > 0) {
                     charMixer = new THREE.AnimationMixer(charModel);
-                    charMixer.clipAction(gltf.animations[0]).play();
+                    charMixer.clipAction(gltf.animations).play();
                 }
             });
 
             container.addEventListener('mousedown', () => isMouseDown = true);
             window.addEventListener('mouseup', () => isMouseDown = false);
             container.addEventListener('mousemove', (e) => {
-                // Modifiziert: Rerechnet NUR noch die Links/Rechts-Achse (Y-Achse), blockiert Oben/Unten
                 if (isMouseDown && charModel) {
                     charModel.rotation.y += (e.clientX - previousMousePosition.x) * 0.01;
                 }
                 previousMousePosition = { x: e.clientX };
-            });
-
-            // Touch-Support für Handys (Nur Y-Achsen Rotation)
-            container.addEventListener('touchstart', (e) => { isMouseDown = true; previousMousePosition.x = e.touches[0].clientX; });
-            window.addEventListener('touchend', () => isMouseDown = false);
-            container.addEventListener('touchmove', (e) => {
-                if (isMouseDown && charModel) {
-                    charModel.rotation.y += (e.touches[0].clientX - previousMousePosition.x) * 0.01;
-                }
-                previousMousePosition = { x: e.touches[0].clientX };
             });
 
             const clock = new THREE.Clock();
@@ -360,7 +197,7 @@
             }
 
             gameScene = new THREE.Scene();
-            gameScene.background = new THREE.Color(0x331a0e); // Dunkles Umgebungslicht passend zur Wüste
+            gameScene.background = new THREE.Color(0x331a0e);
             gameScene.fog = new THREE.FogExp2(0x331a0e, 0.04);
 
             gameCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -375,13 +212,11 @@
             gameScene.add(light);
             gameScene.add(new THREE.AmbientLight(0x666666));
 
-            // NEU: Lädt deine 'durotardirt.png' Datei als echte Bodentextur auf ein ebenes 3D Feld
             const textureLoader = new THREE.TextureLoader();
             textureLoader.load('durotardirt.png', function(texture) {
                 texture.wrapS = THREE.RepeatWrapping;
                 texture.wrapT = THREE.RepeatWrapping;
-                texture.repeat.set(10, 100); // Kachelung für die lange Laufstrecke
-                
+                texture.repeat.set(10, 100);
                 const floorGeo = new THREE.PlaneGeometry(40, 1000);
                 const floorMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
                 floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -390,8 +225,6 @@
             });
 
             const loader = new THREE.GLTFLoader();
-
-            // Lädt deine LOKALE orcmale.glb Datei im Spiel
             loader.load('orcmale.glb', function(gltf) {
                 playerModel = gltf.scene;
                 playerModel.position.set(0, 0, 0);
@@ -399,7 +232,6 @@
                 gameCamera.lookAt(playerModel.position);
             });
 
-            // Lädt deine LOKALE boar.glb Datei im Spiel
             loader.load('boar.glb', function(gltf) {
                 boarModel = gltf.scene;
                 resetBoarPosition();
@@ -414,8 +246,8 @@
                 if (gameLoopRunning) {
                     if (isMovingToEnemy && boarModel) {
                         if (boarModel.position.z < 1.4) {
-                            boarModel.position.z += 0.16; // Eber bewegt sich im 3D Raum auf den Orc zu
-                            if(floorMesh) floorMesh.position.z += 0.08; // Boden gleitet mit weg
+                            boarModel.position.z += 0.16;
+                            if(floorMesh) floorMesh.position.z += 0.08;
                         } else {
                             isMovingToEnemy = false;
                         }
@@ -428,7 +260,7 @@
 
         function resetBoarPosition() {
             if(boarModel) {
-                boarModel.position.set(0, 0, -25); // Setzt den Eber weit nach hinten
+                boarModel.position.set(0, 0, -25);
                 boarModel.visible = true;
                 isMovingToEnemy = true;
             }
@@ -436,22 +268,18 @@
 
         function startAutoCombatLoop() {
             if(combatTimer) clearInterval(combatTimer);
-            
             combatTimer = setInterval(() => {
                 if(!gameLoopRunning || isMovingToEnemy || !boarModel) return;
-
                 let dmg = Math.floor(Math.random() * 5) + 12;
                 showDmgText("-" + dmg);
-
                 clearInterval(combatTimer);
                 setTimeout(() => {
-                    if(boarModel) boarModel.visible = false; // Eber wird unsichtbar nach Tod
+                    if(boarModel) boarModel.visible = false;
                     setTimeout(() => {
                         resetBoarPosition();
                         startAutoCombatLoop();
                     }, 1200);
                 }, 400);
-
             }, 1600);
         }
 
